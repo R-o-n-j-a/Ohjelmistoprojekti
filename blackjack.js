@@ -7,7 +7,7 @@ class Deck {
 
   create() {
     const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
-    const values = ['A','2','3','4','5','6','7','8','8','9','10','J','Q','K'];
+    const values = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
     for (let s of suits) {
       for (let v of values) {
