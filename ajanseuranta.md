@@ -2,4 +2,4 @@
 5.12 1h käyttäjätarinoiden kirjoittamista ja teknologioiden päättämistä.
 9.12 1h käyttäjätarinoiden kirjoittamista, teknologioiden päättämistä ja wireframen tekemistä.
 10.11 15min kunnostamista.
-
+7.1 2h ensimmäisen koodin tekemistä
