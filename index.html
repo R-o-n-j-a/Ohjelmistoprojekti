@@ -3,19 +3,21 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Black Jack</title>
+        <title>BlackJack</title>
         <link rel="stylesheet" href="blackjack.css">
         <script src="blackjack.js"></script>
     </head>
 
     <body>
         <h2>Dealer: <span id="dealer-sum"></span></h2>
-        <div id="dealer-cards"></div>
-            <img src="./cards/BACK.png">
-            <img src="./cards/BACK.png">
+        <div id="dealer-cards">
+            <img id="hidden" src="./cards/BACK.png">
+        </div>
 
         <h2>You: <span id="your-sum"></span></h2>
-        <div id="your-cards"></div>
+        <div id="your-cards">
+
+        </div>
 
         <br>
         <button id="hit">Hit</button>
