@@ -4,4 +4,4 @@
 10.11 15min kunnostamista.
 7.1 2h ensimmäisen koodin tekemistä ja scrumin tekeminen
 8.1 1h30min html, css ja js tiedostojen tekemistä.
-13.1 3h 40min js, html, css tiedostojen muokkaamista.
+13.1 5h 30min js, html, css tiedostojen muokkaamista.

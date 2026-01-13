@@ -72,14 +72,11 @@ function startRound() {
 
     hidden = deck.pop();
     dealer.cards.push(hidden);
-    dealer.sum += getValue(hidden);
-    dealer.aceCount += checkAce(hidden);
 
-    let first = deck.pop();
-    let second = deck.pop();
-    dealer.cards.push(first, second);
-    dealer.sum += getValue(first) +  getValue(second);
-    dealer.aceCount += checkAce(first) + checkAce(second);
+    let visible = deck.pop();
+    dealer.cards.push(visible);
+    dealer.sum += getValue(hidden) +  getValue(visible);
+    dealer.aceCount += checkAce(hidden) + checkAce(visible);
 
     for (let i = 0; i < 2; i++) {
         let card = deck.pop();
@@ -98,6 +95,13 @@ function attachControls() {
     document.getElementById("double").onclick = () => doubleDown();
     document.getElementById("split").onclick = () => splitHand();
     document.getElementById("new-round").onclick = () => startRound();
+    document.getElementById("exit").onclick = () => exitGame();
+}
+
+function exitGame() {
+    if (confirm("Are you sure you want to exit the game?")){
+        window.location.href = "index.html";
+    }
 }
 
 function hit() {
