@@ -53,7 +53,6 @@ function shuffleDeck() {
 
 function startRound() {
     canHit = true;
-
     dealer.cards = [];
     dealer.sum = 0;
     dealer.aceCount = 0;
@@ -88,8 +87,8 @@ function startRound() {
 function attachControls() {
     document.getElementById("hit").onclick = hit;
     document.getElementById("stand").onclick = stand;
+    document.getElementById("new-round").onclick = startRound;
 }
-
 
 function hit() {
     let you = players[0];
@@ -106,6 +105,7 @@ function hit() {
     }
 
     render();
+    if (you.status === "bust") renderResults();
 }
 
 function stand(){
@@ -163,11 +163,13 @@ function render() {
         img.src = `./cards/${c}.png`;
         document.getElementById("your-cards").append(img);
     }
+
+    document.getElementById("dealer-sum").innerText = dealer.status === "reveal" ? dealer.sum : "?";
+    document.getElementById("your-sum").innerText = you.sum;
 }
 
 function renderResults() {
     let you = players[0];
-
     let message = "";
     if (you.sum > 21) {
         message = "You lose";
@@ -181,8 +183,6 @@ function renderResults() {
         message = "You lose";
     }
 
-    document.getElementById("dealer-sum").innerText = dealer.sum;
-    document.getElementById("your-sum").innerText = you.sum;
     document.getElementById("results").innerText = message;
 }
 
