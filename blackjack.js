@@ -11,6 +11,7 @@ window.onload=function() {
     buildDeck();
     shuffleDeck();
     startRound();
+    attachControls();
 }
 
 function initGameState() {
@@ -53,6 +54,9 @@ function shuffleDeck() {
 
 function startRound() {
     canHit = true;
+
+    document.getElementById("results").innerText = "";
+
     dealer.cards = [];
     dealer.sum = 0;
     dealer.aceCount = 0;
@@ -63,15 +67,19 @@ function startRound() {
     you.sum = 0;
     you.aceCount = 0;
     you.status = "playing";
+    you.hands = null;
+    you.currentHandIndex = 0;
 
     hidden = deck.pop();
+    dealer.cards.push(hidden);
     dealer.sum += getValue(hidden);
     dealer.aceCount += checkAce(hidden);
 
+    let first = deck.pop();
     let second = deck.pop();
-    dealer.cards.push(second);
-    dealer.sum += getValue(second);
-    dealer.aceCount += checkAce(second);
+    dealer.cards.push(first, second);
+    dealer.sum += getValue(first) +  getValue(second);
+    dealer.aceCount += checkAce(first) + checkAce(second);
 
     for (let i = 0; i < 2; i++) {
         let card = deck.pop();
@@ -79,54 +87,142 @@ function startRound() {
         you.sum += getValue(card);
         you.aceCount += checkAce(card);
     }
+    you.sum = reduceAce(you.sum, you.aceCount);
     
     render();
-    attachControls();
 }
 
 function attachControls() {
-    document.getElementById("hit").onclick = hit;
-    document.getElementById("stand").onclick = stand;
-    document.getElementById("new-round").onclick = startRound;
+    document.getElementById("hit").onclick = () => hit();
+    document.getElementById("stand").onclick = () => stand();
+    document.getElementById("double").onclick = () => doubleDown();
+    document.getElementById("split").onclick = () => splitHand();
+    document.getElementById("new-round").onclick = () => startRound();
 }
 
 function hit() {
     let you = players[0];
-    if (!canHit || you.status !== "playing") return;
+    if (!canHit) return;
+
+    let hand = you.hands ? you.hands[you.currentHandIndex] : you;
+
+    if (hand.status !== "playing") return;
 
     let card = deck.pop();
-    you.cards.push(card);
-    you.sum += getValue(card);
-    you.aceCount += checkAce(card);
+    hand.cards.push(card);
+    recalc(hand);
 
-    if (reduceAce(you.sum, you.aceCount) > 21) {
-        you.status = "bust";
-        canHit= false;
+    if (hand.sum > 21) hand.status = "bust";
+
+    if (you.hands && hand.status !== "playing") {
+        if (you.currentHandIndex + 1 < you.hands.length) {
+            you.currentHandIndex++;
+        } else {
+            canHit = false;
+            dealerPlay();
+            renderResults();
+        }
+    } else if (!you.hands && you.status !== "playing") {
+            canHit = false;
+            dealerPlay();
+            renderResults();
     }
 
     render();
-    if (you.status === "bust") renderResults();
 }
 
 function stand(){
     let you = players[0];
-    you.sum = reduceAce(you.sum, you.aceCount);
-    canHit = false;
+    let hand = you.hands ? you.hands[you.currentHandIndex] : you;
 
-    dealer.sum = reduceAce(dealer.sum, dealer.aceCount);
-    while (dealer.sum < 17) {
-        let card = deck.pop();
-        dealer.cards.push(card);
-        dealer.sum += getValue(card);
-        dealer.aceCount += checkAce(card);
-        dealer.sum = reduceAce(dealer.sum, dealer.aceCount);
+    if (!canHit || hand.status !== "playing") return;
+
+    hand.status = "stand";
+
+    if (you.hands && you.currentHandIndex + 1 < you.hands.length) {
+        you.currentHandIndex++;
+    } else {
+        canHit = false;
+        dealerPlay();
+        renderResults();
     }
 
-    you.status = "stand";
-    dealer.status = "reveal";
+    render();
+}
+
+function doubleDown() {
+    let you = players[0];
+    let hand = you.hands ? you.hands[you.currentHandIndex] : you;
+
+    if (!canHit || hand.status !== "playing") return;
+
+    let card = deck.pop();
+    hand.cards.push(card);
+    recalc(hand);
+    hand.status = "stand";
+
+    if (you.hands && you.currentHandIndex + 1 < you.hands.length) {
+        you.currentHandIndex++;
+    } else {
+        canHit = false;
+        dealerPlay();
+        renderResults();
+    }
 
     render();
-    renderResults();
+}
+
+function splitHand() {
+    let you = players[0];
+
+    if (!canHit || you.cards.length !== 2) return;
+
+    let card1 = you.cards[0];
+    let card2 = you.cards[1];
+    if (getValue(card1) !== getValue(card2)) {
+        alert("Splitting is only allowed with two cards of the same value.");
+        return;
+    }
+
+    you.hands = [
+        { cards: [card1], sum: getValue(card1), aceCount: checkAce(card1), status: "playing" },
+        { cards: [card2], sum: getValue(card2), aceCount: checkAce(card2), status: "playing" }
+    ];
+
+    for (let hand of you.hands) {
+        let card = deck.pop();
+        hand.cards.push(card);
+        recalc(hand);
+    }
+
+    you.currentHandIndex = 0;
+    you.cards =[];
+    you.sum =0;
+    you.aceCount =0;
+
+    render();
+}
+
+function dealerPlay() {
+    let sum = 0;
+    let aceCount = 0;
+
+    for (let c of dealer.cards) {
+        sum += getValue(c);
+        aceCount += checkAce(c);
+    }
+
+    while (sum < 17) {
+        let card = deck.pop();
+        dealer.cards.push(card);
+        sum += getValue(card);
+        aceCount += checkAce(card);
+        sum = reduceAce(sum, aceCount);
+    }
+
+    dealer.sum = sum;
+    dealer.aceCount = aceCount;
+    dealer.status = "reveal";
 }
 
 function render() {
@@ -137,20 +233,15 @@ function render() {
 
     if (dealer.status === "hidden") {
         let img = document.createElement("img");
-        img.id = "hidden";
         img.src = "./cards/BACK.png";
         document.getElementById("dealer-cards").append(img);
 
-        for (let c of dealer.cards) {
+        for (let i = 1; i < dealer.cards.length; i++) {
             let img2 = document.createElement("img");
-            img2.src = `./cards/${c}.png`;
+            img2.src = `./cards/${dealer.cards[i]}.png`;
             document.getElementById("dealer-cards").append(img2);
         }
     } else {
-        let img = document.createElement("img");
-        img.src = `./cards/${hidden}.png`;
-        document.getElementById("dealer-cards").append(img);
-
         for (let c of dealer.cards) {
             let img2 = document.createElement("img");
             img2.src = `./cards/${c}.png`;
@@ -158,38 +249,71 @@ function render() {
         }
     }
 
-    for (let c of you.cards) {
-        let img = document.createElement("img");
-        img.src = `./cards/${c}.png`;
-        document.getElementById("your-cards").append(img);
+    if (you.hands) {
+        you.hands.forEach((hand, index) => {
+            let div = document.createElement("div");
+            div.innerText = `Hand ${index + 1}: `;
+
+            if (index === you.currentHandIndex) {
+                div.style.backgroundColor = "#8a8a8aaf"; 
+                div.style.padding = "5px";
+                div.style.borderRadius = "5px";
+            }
+
+            hand.cards.forEach(c => {
+                let img = document.createElement("img");
+                img.src = `./cards/${c}.png`;
+                div.appendChild(img);
+            });
+            document.getElementById("your-cards").appendChild(div);
+        });
+    } else {
+        you.cards.forEach(c => {
+            let img = document.createElement("img");
+            img.src = `./cards/${c}.png`;
+            document.getElementById("your-cards").appendChild(img);
+        });
     }
 
     document.getElementById("dealer-sum").innerText = dealer.status === "reveal" ? dealer.sum : "?";
-    document.getElementById("your-sum").innerText = you.sum;
+    document.getElementById("your-sum").innerText = you.hands
+        ? you.hands.map(h => h.sum).join(" / ")
+        : you.sum;
 }
 
 function renderResults() {
     let you = players[0];
-    let message = "";
-    if (you.sum > 21) {
-        message = "You lose";
-    } else if (dealer.sum > 21) {
-        message = "You win!";
-    } else if (you.sum == dealer.sum) {
-        message = "Tie";
-    } else if (you.sum > dealer.sum) {
-        message = "You win!";
+    let messages = [];
+
+    if (you.hands) {
+        you.hands.forEach((hand, index) => {
+            let msg = `Hand ${index + 1}: `;
+            if (hand.sum > 21) msg += "Bust - You lose";
+            else if (dealer.sum > 21) msg += "Dealer bust - You win";
+            else if (hand.sum > dealer.sum) msg += "You win";
+            else if (hand.sum < dealer.sum) msg += "You lose";
+            else msg += "Tie";
+            messages.push(msg);
+        });
     } else {
-        message = "You lose";
+        if (you.sum > 21) messages.push("Bust- You lose");
+        else if (dealer.sum > 21) messages.push("Dealer bust - You win");
+        else if (you.sum > dealer.sum) messages.push("You win");
+        else if (you.sum < dealer.sum) messages.push("You lose");
+        else messages.push("Tie");
     }
 
-    document.getElementById("results").innerText = message;
+    document.getElementById("dealer-sum").innerText = dealer.sum;
+    document.getElementById("your-sum").innerText = you.hands
+        ? you.hands.map(h => h.sum).join(" / ")
+        : you.sum;
+    document.getElementById("results").innerText = messages.join(" | ");
 }
 
 function getValue(card) {
     let value = card.split("-")[0];
-
-    if (isNaN(value)) return value === "A" ? 11 : 10;
+    if (value === "A") return 11;
+    if (["J","Q","K"].includes(value)) return 10;
     return parseInt(value);
 }
 
@@ -203,4 +327,22 @@ function reduceAce(sum, aceCount) {
         aceCount -= 1;
     }
     return sum;
+}
+
+function recalc(hand){
+    let sum = 0;
+    let aceCount = 0;
+
+    for (let c of hand.cards) {
+        sum += getValue(c);
+        aceCount += checkAce(c);
+    }
+
+    while (sum > 21 && aceCount > 0) {
+        sum -= 10;
+        aceCount--;
+    }
+
+    hand.sum = sum;
+    hand.aceCount = aceCount;
 }

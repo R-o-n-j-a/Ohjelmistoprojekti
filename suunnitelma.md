@@ -19,7 +19,7 @@ Perustoiminnot:
 - Jaa kortti
 - Laske pisteet
 - Tarkista blackjack / bust
-- Hit / Stand / Double
+- Hit / Stand / Double / Split
 - Jakajan vuoro
 - Kierroksen päättäminen
 - Voittajien laskeminen
