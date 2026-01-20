@@ -9,22 +9,50 @@
     </head>
 
     <body>
-        <h2>Dealer: <span id="dealer-sum"></span></h2>
-        <div id="dealer-cards"></div>
+        <div id="table">
+            <div id="dealer-section">
+                <h2>Dealer: <span id="dealer-sum"></span></h2>
+                <div id="dealer-cards"></div>
+            </div>
 
-        <h2>You: <span id="your-sum"></span></h2>
-        <div id="your-cards"></div>
+            <div id="bots-row">
+                <div id="bot-left" class="bot" data-bot="0">
+                    <h2>Bot 1: <span class="bot-sum"></span></h2>
+                    <div class="bot-cards"></div>
+                </div>
 
-        <br>
-        <div id="controls">
-            <button id="hit">Hit</button>
-            <button id="stand">Stand</button>
-            <button id="double">Double</button>
-            <button id="split">Split</button>
-            <button id="new-round">New Round</button>
-            <button id="exit">Exit</button>
+                <div id="bot-center" class="bot" data-bot="1">
+                    <h2>Bot 2: <span class="bot-sum"></span></h2>
+                    <div class="bot-cards"></div>
+                </div>
+
+                <div id="bot-right" class="bot" data-bot="2">
+                    <h2>Bot 3: <span class="bot-sum"></span></h2>
+                    <div class="bot-cards"></div>
+                </div>
+            </div>
+
+            <div id="you-section">
+                <h2>You: <span id="your-sum"></span></h2>
+                <div id="your-cards"></div>
+            </div>
         </div>
 
-        <p id="results"></p>
+        <div id="bottom-bar">
+            <div id="controls">
+                <button id="hit">Hit</button>
+                <button id="stand">Stand</button>
+                <button id="double">Double</button>
+                <button id="split">Split</button>
+                <button id="new-round">New Round</button>
+                <button id="add-bot">Add Bot</button>
+                <button id="exit">Exit</button>
+            </div>
+            <div id="info-panel">
+                <p id="turn-info"></p>
+                <p id="results"></p>
+            </div>
+        </div>
+
     </body>
 </html>

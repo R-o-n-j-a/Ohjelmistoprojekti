@@ -2,17 +2,56 @@ body {
     text-align: center;
 }
 
-#dealer-cards img, #your-cards img {
+#table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+}
+
+#dealer-section,
+#you-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#bots-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.bot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bot-cards {
+    display: flex;
+    justify-content: center;
+}
+
+#dealer-cards img, 
+#your-cards img, 
+.bot-cards img {
     height: 175px;
     width: 125px;
     margin: 1px;
 }
 
 #controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
-    justify-content: center;
     gap: 10px;
-    margin-top: 10px;
+    z-index: 10;
 }
 
 #controls button {
@@ -21,8 +60,42 @@ body {
     font-size: 20px;
 }
 
+#info-panel {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 300px;
+    text-align: left;
+    font-size: 18px;
+}
+
+#turn-info {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
 .instructions-page {
     margin-left: 50px;
     margin-right: 550px;
     text-align: left; 
+}
+
+.win {
+    color: green;
+    font-weight: bold;
+}
+
+.lose {
+    color: red;
+    font-weight: bold;
+}
+
+.tie {
+    color: orange;
+    font-weight: bold;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
