@@ -13,3 +13,5 @@
 13.1 5h 30min js, html, css tiedostojen muokkaamista.
 
 20.1 3h 40min bottien tekemistä ja nettisivun asettelua.
+
+27.1 2h käyttöliittymän tekemistä ja koodien parantelua.
