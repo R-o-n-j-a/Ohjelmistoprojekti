@@ -36,12 +36,19 @@ body {
     justify-content: center;
 }
 
+.bot-status {
+    margin-left: 5px;
+    font-size: 16px;
+    color: #ccc;
+}
+
 #dealer-cards img, 
 #your-cards img, 
 .bot-cards img {
     height: 175px;
     width: 125px;
-    margin: 1px;
+    margin-top: 1px;
+    margin-bottom: 1px;
 }
 
 #controls {
@@ -98,4 +105,31 @@ body {
 button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.active-hand {
+    background-color: #d1d1d1af;
+    border: 2px solid gold;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+#results {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #d1d1d1af;
+    border-radius: 8px;
+    min-height: 40px;
+}
+
+#dealer-cards img,
+#your-cards img,
+.bot-cards img {
+    margin-left: -45px;
+}
+
+#dealer-cards img:first-child,
+#your-cards img:first-child,
+.bot-cards img:first-child {
+    margin-left: 0;
 }

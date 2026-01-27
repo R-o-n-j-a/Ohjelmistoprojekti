@@ -5,6 +5,7 @@ var canHit=true;
 
 let players = [];
 let dealer = {};
+let roundFinished = false;
 
 window.onload=function() {
     initGameState();
@@ -30,7 +31,7 @@ function initGameState() {
         cards: [],
         sum: 0,
         aceCount: 0,
-        status: "hidden"
+        status: "hidden",
     };
 }
 
@@ -58,10 +59,17 @@ function startRound() {
     players.forEach(p => {
         if (p.isBot) {
             p.active = true;
+            p.uiStatus = "";
+            p.status = "waiting";
         }
     });
 
+    players[0].uiStatus = "";
+    dealer.uiStatus = "";
+
+
     canHit = true;
+    roundFinished = false;
     document.getElementById("results").innerText = "";
 
     dealer.cards = [];
@@ -74,6 +82,7 @@ function startRound() {
     you.sum = 0;
     you.aceCount = 0;
     you.status = "playing";
+    you.uiStatus = "";
     you.hands = null;
     you.currentHandIndex = 0;
 
@@ -93,8 +102,6 @@ function startRound() {
 
     let visible = deck.pop();
     dealer.cards.push(visible);
-    dealer.sum += getValue(hidden) +  getValue(visible);
-    dealer.aceCount += checkAce(hidden) + checkAce(visible);
 
     for (let i = 0; i < 2; i++) {
         let card = deck.pop();
@@ -150,9 +157,12 @@ function hit() {
     let card = deck.pop();
     hand.cards.push(card);
     recalc(hand);
+    players[0].uiStatus = "Hit";
+
 
     if (hand.sum > 21) {
         hand.status = "bust";
+        players[0].uiStatus = "Bust";
     }
 
     if (you.hands && hand.status !== "playing") {
@@ -170,12 +180,15 @@ function hit() {
     if (allHandsDone) {
         canHit = false;
 
-        players
-            .filter(p => p.isBot && p.active)
-            .forEach(bot => playBot(bot));
+        (async () => {
+            for (let bot of players.filter(p => p.isBot && p.active)) {
+                await playBot(bot);
+            }
 
-        dealerPlay();
-        renderResults();
+            dealerPlay();
+            render();
+            renderResults();
+        })();
     }
 
     render();
@@ -188,6 +201,7 @@ function stand(){
     if (!canHit || hand.status !== "playing") return;
 
     hand.status = "stand";
+    players[0].uiStatus = "Stand";
 
      if (you.hands && you.currentHandIndex < you.hands.length - 1) {
         you.currentHandIndex++;
@@ -196,12 +210,16 @@ function stand(){
     }
     canHit = false;
 
-    players
-        .filter(p => p.isBot && p.active)
-        .forEach(bot => playBot(bot));
+    (async () => {
+        for (let bot of players.filter(p => p.isBot && p.active)) {
+            await playBot(bot);
+        }
 
-    dealerPlay();
-    renderResults();
+        dealerPlay();
+        render();
+        renderResults();
+    })();
+
     render();
 }
 
@@ -216,15 +234,22 @@ function doubleDown() {
     hand.cards.push(card);
     recalc(hand);
     hand.status = "stand";
+    players[0].uiStatus = "Double";
 
     if (you.hands && you.currentHandIndex + 1 < you.hands.length) {
         you.currentHandIndex++;
     } else {
         canHit = false;
-        dealerPlay();
-        renderResults();
-    }
 
+        (async () => {
+            for (let bot of players.filter(p => p.isBot && p.active)) {
+                await playBot(bot);
+            }
+            dealerPlay();
+            render();
+            renderResults();
+        })();
+    }
     render();
 }
 
@@ -257,6 +282,8 @@ function splitHand() {
     you.sum =0;
     you.aceCount =0;
 
+    players[0].uiStatus = "Split";
+
     render();
 }
 
@@ -268,6 +295,8 @@ function dealerPlay() {
         sum += getValue(c);
         aceCount += checkAce(c);
     }
+
+    sum = reduceAce(sum, aceCount);
 
     while (sum < 17) {
         let card = deck.pop();
@@ -325,6 +354,9 @@ function render() {
 
         botDiv.style.display = "block";
         botDiv.querySelector(".bot-sum").innerText = bot.sum;
+        botDiv.querySelector(".bot-status").innerText =
+            bot.uiStatus ? `(${bot.uiStatus})` : "";
+
         const cardsDiv = botDiv.querySelector(".bot-cards");
         cardsDiv.innerHTML = "";
 
@@ -346,9 +378,7 @@ function render() {
             handDiv.innerText = `Hand ${index + 1}: `;
 
             if (index === you.currentHandIndex) {
-                handDiv.style.backgroundColor = "#8a8a8aaf";
-                handDiv.style.padding = "5px";
-                handDiv.style.borderRadius = "5px";
+                handDiv.classList.add("active-hand");
             }
 
             hand.cards.forEach(c => {
@@ -374,11 +404,15 @@ function render() {
         ? you.hands.map(h => h.sum).join(" / ")
         : you.sum;
 
+    document.getElementById("your-status").innerText =
+    you.uiStatus ? `(${you.uiStatus})` : "";
+
     updateControls();
     updateTurnText();
 }
 
 function renderResults() {
+    roundFinished = true;
     let you = players[0];
     let messages = [];
 
@@ -426,6 +460,7 @@ function renderResults() {
         document.getElementById("results").appendChild(p);
     });
 
+    updateTurnText();
 }
 
 function addBot() {
@@ -450,17 +485,49 @@ function addBot() {
     alert(`Bot ${botCount + 1} added. It will join next round.`);
 }
 
-function playBot(bot) {
+async function playBot(bot) {
+    bot.status = "playing";
+    updateBotStatus(bot, "Thinking...");
+    render();
+
+    await delay(800);
+
     while (bot.sum < 16) {
         let card = deck.pop();
         bot.cards.push(card);
         recalc(bot);
+
+        updateBotStatus(bot, "Hit");
+        render();
+
+        await delay(800);
     }
-    bot.status = bot.sum > 21 ? "bust" : "stand";
+
+    await delay(500);
+
+    if (bot.sum > 21) {
+        bot.status = "bust";
+        updateBotStatus(bot, "Bust");
+    } else {
+        bot.status = "stand";
+        updateBotStatus(bot, "Stand");
+    }
+
+    render();
+
+    await delay(500);
 }
 
 function updateControls() {
     let player = players[0];
+
+    if (roundFinished) {
+        document.getElementById("hit").disabled = true;
+        document.getElementById("stand").disabled = true;
+        document.getElementById("double").disabled = true;
+        document.getElementById("split").disabled = true;
+        return;
+    }
 
     document.getElementById("hit").disabled = !canHit;
     document.getElementById("stand").disabled = !canHit;
@@ -484,7 +551,9 @@ function updateControls() {
 function updateTurnText() {
     let text;
 
-    if (canHit) {
+    if (roundFinished) {
+        text = "Round finished";
+    } else if (canHit) {
         text = "Your turn";
     } else {
         text = "Round in progress...";
@@ -528,4 +597,12 @@ function recalc(hand){
 
     hand.sum = sum;
     hand.aceCount = aceCount;
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function updateBotStatus(bot, text) {
+    bot.uiStatus = text;
 }
