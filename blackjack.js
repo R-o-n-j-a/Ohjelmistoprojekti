@@ -6,6 +6,9 @@ var canHit=true;
 let players = [];
 let dealer = {};
 let roundFinished = false;
+let winStreak = 0;
+let bestStreak = 0;
+let history = [];
 
 window.onload=function() {
     initGameState();
@@ -32,6 +35,8 @@ function initGameState() {
         sum: 0,
         aceCount: 0,
         status: "hidden",
+        hasFlipped: false,
+        uiStatus: ""
     };
 }
 
@@ -55,6 +60,8 @@ function shuffleDeck() {
 }
 
 function startRound() {
+    document.getElementById("round-result").innerHTML = "";
+    document.getElementById("info-messages").innerHTML = "";
 
     players.forEach(p => {
         if (p.isBot) {
@@ -67,10 +74,8 @@ function startRound() {
     players[0].uiStatus = "";
     dealer.uiStatus = "";
 
-
     canHit = true;
     roundFinished = false;
-    document.getElementById("results").innerText = "";
 
     dealer.cards = [];
     dealer.sum = 0;
@@ -95,6 +100,7 @@ function startRound() {
         player.aceCount = 0;
         player.status = "playing";
     }
+    dealer.hasFlipped = false;
 });
 
     hidden = deck.pop();
@@ -127,7 +133,7 @@ function startRound() {
             player.sum = reduceAce(player.sum, player.aceCount);
         }
     });
-    
+    recalc(dealer);
     render();
 }
 
@@ -185,7 +191,7 @@ function hit() {
                 await playBot(bot);
             }
 
-            dealerPlay();
+            await dealerPlay();
             render();
             renderResults();
         })();
@@ -215,7 +221,7 @@ function stand(){
             await playBot(bot);
         }
 
-        dealerPlay();
+        await dealerPlay();
         render();
         renderResults();
     })();
@@ -245,7 +251,7 @@ function doubleDown() {
             for (let bot of players.filter(p => p.isBot && p.active)) {
                 await playBot(bot);
             }
-            dealerPlay();
+            await dealerPlay();
             render();
             renderResults();
         })();
@@ -287,28 +293,39 @@ function splitHand() {
     render();
 }
 
-function dealerPlay() {
-    let sum = 0;
-    let aceCount = 0;
+async function dealerPlay() {
+    dealer.status = "playing";
+    dealer.uiStatus = "Revealing";
+    updateTurnText();
+    render();
 
-    for (let c of dealer.cards) {
-        sum += getValue(c);
-        aceCount += checkAce(c);
-    }
+    await delay(600);
 
-    sum = reduceAce(sum, aceCount);
-
-    while (sum < 17) {
-        let card = deck.pop();
-        dealer.cards.push(card);
-        sum += getValue(card);
-        aceCount += checkAce(card);
-        sum = reduceAce(sum, aceCount);
-    }
-
-    dealer.sum = sum;
-    dealer.aceCount = aceCount;
     dealer.status = "reveal";
+    dealer.uiStatus = "Revealed";
+    recalc(dealer);
+    render();
+
+    while (dealer.sum < 17) {
+        await delay(700);
+
+        dealer.cards.push(deck.pop());
+        recalc(dealer);
+
+        dealer.uiStatus = "Hit";
+        render();
+    }
+
+    await delay(600);
+
+    if (dealer.sum > 21) {
+        dealer.uiStatus = "Bust";
+    } else {
+        dealer.uiStatus = "Stand";
+    }
+
+    dealer.status = "done";
+    render();
 }
 
 function render() {
@@ -318,31 +335,48 @@ function render() {
     dealerDiv.innerHTML = "";
     yourDiv.innerHTML = "";
 
-    //dealer
+    // dealer
     if (dealer.status === "hidden") {
-        let backImg = document.createElement("img");
+        const backImg = document.createElement("img");
         backImg.src = "./cards/BACK.png";
         dealerDiv.appendChild(backImg);
 
-        for (let i = 1; i < dealer.cards.length; i++) {
-            let img = document.createElement("img");
-            img.src = `./cards/${dealer.cards[i]}.png`;
-            dealerDiv.appendChild(img);
-        }
+        const img = document.createElement("img");
+        img.src = `./cards/${dealer.cards[1]}.png`;
+        dealerDiv.appendChild(img);
     } else {
-        dealer.cards.forEach(c => {
-            let img = document.createElement("img");
-            img.src = `./cards/${c}.png`;
-            dealerDiv.appendChild(img);
+        dealer.cards.forEach((c, index) => {
+            const img = document.createElement("img");
+
+            if (index === 0 && !dealer.hasFlipped) {
+                img.src = `./cards/${c}.png`;
+                img.classList.add("dealer-card");
+
+                dealerDiv.appendChild(img);
+
+                setTimeout(() => {
+                    img.classList.add("revealed");
+                }, 50);
+
+                dealer.hasFlipped = true;
+            } else {
+                img.src = `./cards/${c}.png`;
+                dealerDiv.appendChild(img);
+            }
         });
     }
 
     document.getElementById("dealer-sum").innerText =
-        dealer.status === "reveal" ? dealer.sum : "?";
+    dealer.status === "reveal" || dealer.status === "done"
+        ? dealer.sum
+        : "?";
+
+    document.getElementById("dealer-status").innerText =
+    dealer.uiStatus ? `(${dealer.uiStatus})` : "";
 
     //bots
     const botDivs = document.querySelectorAll(".bot");
-    const bots = players.filter(p => p.isBot && p.active);
+    const bots = players.filter(p => p.isBot);
 
     botDivs.forEach((botDiv, index) => {
         const bot = bots[index];
@@ -351,11 +385,19 @@ function render() {
             botDiv.style.display = "none";
         return;
         }
-
         botDiv.style.display = "block";
+
+        const statusEl = botDiv.querySelector(".bot-status");
+
+        if (!bot.active) {
+            botDiv.classList.add("waiting");
+            statusEl.innerText = "(Waiting next round)";
+        } else {
+            botDiv.classList.remove("waiting");
+            statusEl.innerText = bot.uiStatus ? `(${bot.uiStatus})` : "";
+        }
+
         botDiv.querySelector(".bot-sum").innerText = bot.sum;
-        botDiv.querySelector(".bot-status").innerText =
-            bot.uiStatus ? `(${bot.uiStatus})` : "";
 
         const cardsDiv = botDiv.querySelector(".bot-cards");
         cardsDiv.innerHTML = "";
@@ -413,37 +455,87 @@ function render() {
 
 function renderResults() {
     roundFinished = true;
-    let you = players[0];
+
+    renderPlayerResults();
+    renderBotResults();
+    updateTurnText();
+}
+
+function renderStats() {
+    const stats = document.getElementById("stats");
+    stats.innerHTML = `
+        <hr>
+        <div>Current streak: ${winStreak}</div>
+        <div>Best streak: ${bestStreak}</div>
+        <div>History: ${history.join(" ")}</div>
+    `;
+}
+
+function renderPlayerResults() {
+    const you = players[0];
+    const roundDiv = document.getElementById("round-result");
+    roundDiv.innerHTML = "";
     let messages = [];
+    let outcome;
 
     if (you.hands) {
         you.hands.forEach((hand, index) => {
             let msg = `Hand ${index + 1}: `;
-            if (hand.sum > 21) msg += "Bust - You lose";
-            else if (dealer.sum > 21) msg += "Dealer bust - You win";
-            else if (hand.sum > dealer.sum) msg += "You win";
-            else if (hand.sum < dealer.sum) msg += "You lose";
-            else msg += "Tie";
+            if (hand.sum > 21) {
+                msg += "Bust - You lose"; 
+                outcome = "L";
+            } else if (dealer.sum > 21) {
+                msg += "Dealer bust - You win";
+                outcome = "W";
+            } else if (hand.sum > dealer.sum) {
+                msg += "You win";
+                outcome = "W";
+            } else if (hand.sum < dealer.sum) {
+                msg += "You lose";
+                outcome = "L";
+            } else {
+                msg += "Tie";
+                outcome = "T";
+            }
             messages.push(msg);
         });
     } else {
-        if (you.sum > 21) messages.push("Bust- You lose");
-        else if (dealer.sum > 21) messages.push("Dealer bust - You win");
-        else if (you.sum > dealer.sum) messages.push("You win");
-        else if (you.sum < dealer.sum) messages.push("You lose");
-        else messages.push("Tie");
+        if (you.sum > 21) {
+            messages.push("Bust - You lose");
+            outcome = "L";
+        } else if (dealer.sum > 21) {
+            messages.push("Dealer bust - You win");
+            outcome = "W";
+        } else if (you.sum > dealer.sum) {
+            messages.push("You win");
+            outcome = "W";
+        } else if (you.sum < dealer.sum) {
+            messages.push("You lose");
+            outcome = "L";
+        } else {
+            messages.push("Tie");
+            outcome = "T";
+        }
     }
 
-    document.getElementById("dealer-sum").innerText = dealer.sum;
-    document.getElementById("your-sum").innerText = you.hands
-        ? you.hands.map(h => h.sum).join(" / ")
-        : you.sum;
-    
-    let resultEl = document.getElementById("results");
-    resultEl.className = "";
-    resultEl.innerText = messages.join(" | ");
+    roundDiv.innerText = messages.join(" | ");
 
-    players.forEach((player, index) => {
+    if (outcome === "W") {
+        winStreak++;
+        bestStreak = Math.max(bestStreak, winStreak);
+    } else if (outcome === "L") {
+        winStreak = 0;
+    }
+    history.push(outcome);
+    if (history.length > 10) history.shift();
+
+    renderStats();
+}
+
+function renderBotResults() {
+    const results = document.getElementById("round-result");
+
+    players.forEach(player => {
         if (!player.isBot) return;
 
         let result;
@@ -453,27 +545,43 @@ function renderResults() {
         else if (player.sum < dealer.sum) result = "Loses";
         else result = "Tie";
 
-        console.log(`${player.name}: ${result} (${player.sum})`);
-
-        let p = document.createElement("div");
+        const p = document.createElement("div");
         p.innerText = `${player.name}: ${result} (${player.sum})`;
-        document.getElementById("results").appendChild(p);
+        results.appendChild(p);
     });
+}
 
-    updateTurnText();
+function showResultMessage(text, type = "") {
+    const results = document.getElementById("results");
+    const msg = document.createElement("div");
+    msg.innerText = text;
+
+    if (type) {
+        msg.classList.add(type);
+    }
+    results.appendChild(msg);
+}
+
+function showInfoMessage(text) {
+    const info = document.getElementById("info-messages");
+    const msg = document.createElement("div");
+    msg.innerText = text;
+    info.appendChild(msg);
 }
 
 function addBot() {
     let botCount = players.filter(p => p.isBot).length;
 
     if (botCount >= 3) {
-        alert("Maximum number of bots reached.");
+        showResultMessage("Maximum number of bots reached.", "info");
         return;
     }
 
+    let newBotNumber = botCount + 1;
+
     players.push({
-        id: "bot" + (botCount + 1),
-        name: "Bot " + (botCount + 1),
+        id: "bot" + (newBotNumber),
+        name: "Bot " + (newBotNumber),
         cards: [],
         sum: 0,
         aceCount: 0,
@@ -481,8 +589,11 @@ function addBot() {
         isBot: true,
         active: false
     });
-
-    alert(`Bot ${botCount + 1} added. It will join next round.`);
+    
+    showInfoMessage(
+        `Bot ${newBotNumber} added. It will join next round.`
+    );
+    render();
 }
 
 async function playBot(bot) {
@@ -548,13 +659,15 @@ function updateControls() {
     document.getElementById("split").disabled = !canSplit;
 }
 
-function updateTurnText() {
+function updateTurnText(forceText = null) {
     let text;
 
     if (roundFinished) {
         text = "Round finished";
     } else if (canHit) {
         text = "Your turn";
+    } else if (dealer.status === "playing") {
+        text = "Dealer is playing...";
     } else {
         text = "Round in progress...";
     }
@@ -597,6 +710,21 @@ function recalc(hand){
 
     hand.sum = sum;
     hand.aceCount = aceCount;
+}
+
+function recalcDealer() {
+    let sum = 0;
+    let aceCount = 0;
+
+    for (let c of dealer.cards) {
+        sum += getValue(c);
+        aceCount += checkAce(c);
+    }
+
+    sum = reduceAce(sum, aceCount);
+
+    dealer.sum = sum;
+    dealer.aceCount = aceCount;
 }
 
 function delay(ms) {

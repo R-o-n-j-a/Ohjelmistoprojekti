@@ -42,6 +42,21 @@ body {
     color: #ccc;
 }
 
+.bot.waiting {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    transform: scale(0.95);
+    transition: all 0.4s ease;
+}
+
+.bot.waiting .bot-status {
+    font-style: italic;
+}
+
+.bot {
+    transition: all 0.4s ease;
+}
+
 #dealer-cards img, 
 #your-cards img, 
 .bot-cards img {
@@ -88,18 +103,23 @@ body {
 }
 
 .win {
-    color: green;
+    color: rgb(75, 128, 75);
     font-weight: bold;
 }
 
 .lose {
-    color: red;
+    color: rgb(139, 8, 8);
     font-weight: bold;
 }
 
 .tie {
-    color: orange;
+    color: rgb(219, 168, 72);
     font-weight: bold;
+}
+
+.info {
+    color: rgb(0, 0, 0);
+    font-style: italic;
 }
 
 button:disabled {
@@ -133,3 +153,17 @@ button:disabled {
 .bot-cards img:first-child {
     margin-left: 0;
 }
+
+.dealer-card {
+    opacity: 0;
+    transform: translateY(-15px);
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s ease;
+}
+
+.dealer-card.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+

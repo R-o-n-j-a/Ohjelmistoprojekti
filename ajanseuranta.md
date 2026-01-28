@@ -15,3 +15,5 @@
 20.1 3h 40min bottien tekemistä ja nettisivun asettelua.
 
 27.1 2h käyttöliittymän tekemistä ja koodien parantelua.
+
+28.1 4h bugien korjaamista, korttien animaatiota ja peli kokemuksen parantamista.
