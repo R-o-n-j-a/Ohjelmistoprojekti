@@ -17,3 +17,5 @@
 27.1 2h käyttöliittymän tekemistä ja koodien parantelua.
 
 28.1 4h bugien korjaamista, korttien animaatiota ja peli kokemuksen parantamista.
+
+29.1 3h Bugien korjaamista, bottien vaikeuttamista, html sivujen ulkonäön muokkausta.

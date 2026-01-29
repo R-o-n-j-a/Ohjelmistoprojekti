@@ -1,5 +1,110 @@
-body {
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body.blackjack-page {
+    min-height: 90vh;
+    background-image: url("blackjack_background.jpg");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+body.index-page {
+    min-height: 90vh;
+    background-image: url("index_background.jpg");
+    background-position: center;
+    background-size: cover;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.welcome-box {
+    background: rgba(0, 0, 0, 0.65);
+    padding: 25px 40px;
+    border-radius: 12px;
     text-align: center;
+    margin-bottom: 30px;
+}
+
+.welcome-box h1 {
+    margin: 0;
+    margin-bottom: 5px;
+}
+
+.welcome-box h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: normal;
+    opacity: 0.9;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.menu-btn {
+    display: inline-block;
+    text-decoration: none;
+    padding: 15px 40px;
+    font-size: 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    line-height: 1;
+    font-family: inherit;
+}
+.menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.menu-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.back-btn {
+    display: inline-block;
+    text-decoration: none;
+    padding: 5px 20px;
+    font-size: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    color: rgb(0, 0, 0);
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 30px;
+    margin-top: 30px;
+}
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
 }
 
 #table {
@@ -8,6 +113,7 @@ body {
     align-items: center;
     gap: 5px;
     padding: 5px;
+    padding-bottom: 140px;
 }
 
 #dealer-section,
@@ -76,19 +182,39 @@ body {
     z-index: 10;
 }
 
-#controls button {
-    width: 100px;
-    height: 50px;
-    font-size: 20px;
+#info-panel {
+    position: absolute;
+    bottom: 40px;
+    right: 20px;
+    display: flex;
+    height: auto;
+    flex-direction: column;
+    gap: 10px;
+    color: white;
 }
 
-#info-panel {
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
-    width: 300px;
-    text-align: left;
-    font-size: 18px;
+#results {
+    padding: 12px 14px;
+    background: rgba(0,0,0,0.65);
+    border-radius: 10px;
+
+    min-width: 260px;
+    min-height: 80px;
+
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    transition: all 0.25s ease;
+}
+
+#stats {
+    padding: 10px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 8px;
+    font-size: 16px;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    white-space: normal;
+    word-wrap: break-word;
 }
 
 #turn-info {
@@ -118,13 +244,8 @@ body {
 }
 
 .info {
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
     font-style: italic;
-}
-
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }
 
 .active-hand {
@@ -132,14 +253,6 @@ button:disabled {
     border: 2px solid gold;
     border-radius: 6px;
     padding: 6px;
-}
-
-#results {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #d1d1d1af;
-    border-radius: 8px;
-    min-height: 40px;
 }
 
 #dealer-cards img,
@@ -166,4 +279,3 @@ button:disabled {
     opacity: 1;
     transform: translateY(0);
 }
-
