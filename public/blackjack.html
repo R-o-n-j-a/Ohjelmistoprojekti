@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>BlackJack</title>
+        <link rel="stylesheet" href="./css/style.css">
+        <script type="module" src="js/main.js"></script>
+    </head>
+
+    <body class="blackjack-page">
+        <div id="table">
+            <div id="dealer-section">
+                <h2>Dealer: <span id="dealer-sum"></span>
+                <span id="dealer-status" class="bot-status"></span></h2>
+                <div id="dealer-cards"></div>
+            </div>
+
+            <div id="bots-row">
+                <div id="bot-left" class="bot" data-bot="0">
+                    <h2>Bot 1: <span class="bot-sum"></span>
+                    <span class="bot-status"></span></h2>
+                    <div class="bot-cards"></div>
+                </div>
+
+                <div id="bot-center" class="bot" data-bot="1">
+                    <h2>Bot 2: <span class="bot-sum"></span>
+                    <span class="bot-status"></span></h2>
+                    <div class="bot-cards"></div>
+                </div>
+
+                <div id="bot-right" class="bot" data-bot="2">
+                    <h2>Bot 3: <span class="bot-sum"></span>
+                    <span class="bot-status"></span></h2>
+                    <div class="bot-cards"></div>
+                </div>
+            </div>
+
+            <div id="you-section">
+                <h2>You: <span id="your-sum"></span>
+                <span id="your-status" class="bot-status"></span></h2>
+                <div id="your-cards"></div>
+            </div>
+        </div>
+
+        <div id="bottom-bar">
+            <div id="controls">
+                <button id="hit" class="menu-btn">Hit</button>
+                <button id="stand" class="menu-btn">Stand</button>
+                <button id="double" class="menu-btn">Double</button>
+                <button id="split" class="menu-btn">Split</button>
+                <button id="new-round" class="menu-btn">New Round</button>
+                <button id="add-bot" class="menu-btn">Add Bot</button>
+                <button id="exit" class="menu-btn">Exit</button>
+            </div>
+            <div id="info-panel">
+                <p id="turn-info"></p>
+                <div id="results">
+                    <div id="round-result"></div>
+                    <div id="info-messages"></div>
+                </div>
+                <div id="stats"></div>
+            </div>
+        </div>
+
+    </body>
+</html>
