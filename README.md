@@ -1,6 +1,12 @@
 Lataa projektin tiedostot omalle koneelle (kaikki muut pakollisia paitsi
 Wireframep.png, ajanseuranta.md ja suunnitelma.md)
 
-Avaa index.html tiedosto
+Avaa projektin kansio komentorivillä
 
-Paina Start game ja peli käynnistyy
+Kirjoita komentoriville npm install
+
+Käynnistä peli npm start komennolla
+
+Avaa selain ja siirry osoitteeseen http://localhost:3000
+
+Klikkaa Start game ja peli käynnistyy
