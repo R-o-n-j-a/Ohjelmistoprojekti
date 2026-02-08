@@ -23,5 +23,6 @@
 2.2 2h tiedoston jakamista.
 
 5.2 4h tiedoston jakamista, bugien korjailua ja express taustajärjestelmän luomista.
+<<<<<<< HEAD
 
 8.2 1h 30min Splitin ja muiden bugien korjaamista
