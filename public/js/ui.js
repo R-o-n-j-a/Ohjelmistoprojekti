@@ -58,28 +58,43 @@ export function render(state) {
     const player = state.players[0];
     const handContainer = document.createElement("div");
 
+    handContainer.style.display = "flex";
+    handContainer.style.gap = "10px";
+    handContainer.style.justifyContent = "center";
+
     if (player.hands) {
         player.hands.forEach((hand, idx) => {
             const handDiv = document.createElement("div");
-            handDiv.innerText = `Hand ${idx + 1}: `;
+            handDiv.classList.add("hand");
             if (idx === player.currentHandIndex) handDiv.classList.add("active-hand");
+            
+            const label = document.createElement("div");
+            label.innerText = `Hand ${idx + 1} (${hand.sum})`;
+            handDiv.appendChild(label);
+
+            const cardsDiv = document.createElement("div");
+            cardsDiv.classList.add("hand-cards");
 
             hand.cards.forEach(c => {
                 const img = document.createElement("img");
                 img.src = `./cards/${c}.png`;
-                handDiv.appendChild(img);
+                cardsDiv.appendChild(img);
             });
 
+            handDiv.appendChild(cardsDiv);
             handContainer.appendChild(handDiv);
         });
     } else {
+        const cardsDiv = document.createElement("div");
+        cardsDiv.classList.add("hand-cards");
+
         player.cards.forEach(c => {
             const img = document.createElement("img");
             img.src = `./cards/${c}.png`;
-            handContainer.appendChild(img);
+            cardsDiv.appendChild(img);
         });
+        handContainer.appendChild(cardsDiv);
     }
-
     yourDiv.appendChild(handContainer);
 
     document.getElementById("your-sum").innerText = player.hands
@@ -99,20 +114,37 @@ export function render(state) {
             infoDiv.appendChild(div);
         });
     }
-
+    //round results
     const roundDiv = document.getElementById("round-result");
     roundDiv.innerHTML = "";
    if (state.roundFinished && state.lastResult) {
-    roundDiv.innerHTML = `Round Result: ${state.lastResult.player.outcome} (${state.lastResult.player.sum})`;
 
-    if (state.lastResult.bots.length) {
-        state.lastResult.bots.forEach(bot => {
+        const title = document.createElement("strong");
+        title.innerText = "Round results:";
+        roundDiv.appendChild(title);
+
+        if (Array.isArray(state.lastResult.player)) {
+            state.lastResult.player.forEach(hand => {
+                const p = document.createElement("p");
+                p.innerText = `You (Hand ${hand.hand}): ${hand.outcome} (${hand.sum})`;
+                roundDiv.appendChild(p);
+            });
+        } else {
             const p = document.createElement("p");
-            p.innerText = `${bot.name}: ${bot.outcome} (${bot.sum})`;
+            p.innerText = `You: ${state.lastResult.player.outcome} (${state.lastResult.player.sum})`;
             roundDiv.appendChild(p);
-        });
+        }
+        if (state.lastResult.bots && state.lastResult.bots.length) {
+            state.lastResult.bots.forEach(bot => {
+                const p = document.createElement("p");
+                p.innerText = `${bot.name}: ${bot.outcome} (${bot.sum})`;
+                roundDiv.appendChild(p);
+            });
+        }
+        const d = document.createElement("p");
+        d.innerText = `Dealer: ${state.lastResult.dealer}`;
+        roundDiv.appendChild(d);
     }
-}
     const statsDiv = document.getElementById("stats");
     statsDiv.innerHTML = `
         <hr>
@@ -164,24 +196,37 @@ export function updateControls(state) {
 }
 
 export function updateTurnText(state) {
-  let text;
-  if (state.roundFinished) text = "Round finished";
-  else if (state.players[0].status === "playing") text = "Your turn";
-  else text = "Round in progress...";
-  document.getElementById("turn-info").innerText = text;
+    const player = state.players[0];
+
+    if (state.roundFinished) {
+        document.getElementById("turn-info").innerText = "Round finished";
+        return;
+    }
+    let hasActiveHand = false;
+    if (player.hands) {
+        hasActiveHand = player.currentHandIndex < player.hands.length &&
+                        player.hands[player.currentHandIndex].status === "playing";
+    } else {
+        hasActiveHand = player.status === "playing";
+    }
+    if (state.canHit && hasActiveHand) {
+        document.getElementById("turn-info").innerText = "Your turn";
+    } else {
+        document.getElementById("turn-info").innerText = "Round in progress...";
+    }
 }
 
 export function showResult(state, text) {
-  const results = document.getElementById("round-result");
-  const p = document.createElement("p");
-  p.textContent = text;
-  results.appendChild(p);
+    const results = document.getElementById("round-result");
+    const p = document.createElement("p");
+    p.textContent = text;
+    results.appendChild(p);
 }
 
 function getValue(card) {
-  if (!card) return 0;
-  const value = card.split("-")[0];
-  if (value === "A") return 11;
-  if (["J", "Q", "K"].includes(value)) return 10;
-  return parseInt(value);
+    if (!card) return 0;
+    const value = card.split("-")[0];
+    if (value === "A") return 11;
+    if (["J", "Q", "K"].includes(value)) return 10;
+    return parseInt(value);
 }

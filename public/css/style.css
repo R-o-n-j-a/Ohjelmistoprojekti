@@ -121,6 +121,7 @@ body.index-page {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 220px;
 }
 
 #bots-row {
@@ -161,15 +162,6 @@ body.index-page {
 
 .bot {
     transition: all 0.4s ease;
-}
-
-#dealer-cards img, 
-#your-cards img, 
-.bot-cards img {
-    height: 175px;
-    width: 125px;
-    margin-top: 1px;
-    margin-bottom: 1px;
 }
 
 #controls {
@@ -228,24 +220,18 @@ body.index-page {
     text-align: left; 
 }
 
-.win {
-    color: rgb(75, 128, 75);
-    font-weight: bold;
-}
-
-.lose {
-    color: rgb(139, 8, 8);
-    font-weight: bold;
-}
-
-.tie {
-    color: rgb(219, 168, 72);
-    font-weight: bold;
-}
-
 .info {
     color: rgb(255, 255, 255);
     font-style: italic;
+}
+
+#dealer-cards img, 
+#your-cards img, 
+.bot-cards img {
+    height: 175px;
+    width: 125px;
+    margin-top: 1px;
+    margin-bottom: 1px;
 }
 
 .active-hand {
@@ -255,15 +241,15 @@ body.index-page {
     padding: 6px;
 }
 
-#dealer-cards img,
-#your-cards img,
-.bot-cards img {
+.hand-cards {
+    display: flex;
+}
+
+.hand-cards img {
     margin-left: -45px;
 }
 
-#dealer-cards img:first-child,
-#your-cards img:first-child,
-.bot-cards img:first-child {
+.hand-cards img:first-child {
     margin-left: 0;
 }
 

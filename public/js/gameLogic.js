@@ -1,5 +1,5 @@
 import { render, showInfo, updateControls, updateTurnText } from "./ui.js";
-import { calculateSum, delay } from "./utils.js";
+import { calculateSum, delay, getCardValue } from "./utils.js";
 import { playBots } from "./bots.js";
 
 export function buildDeck() {
@@ -71,6 +71,21 @@ export function startRound(state) {
   updateTurnText(state);
 }
 
+function nextPlayerHand(state) {
+    const you = state.players[0];
+
+    if (!you.hands) return false;
+
+    if (you.currentHandIndex < you.hands.length - 1) {
+        you.currentHandIndex++;
+        you.uiStatus = `Hand ${you.currentHandIndex + 1}`;
+        state.canHit = true;
+        return true;
+    }
+
+    return false;
+}
+
 export function hit(state) {
   if (!state.canHit) return;
 
@@ -82,7 +97,10 @@ export function hit(state) {
   if (hand.sum > 21) {
     hand.status = "bust";
     you.uiStatus = "Bust";
-    nextTurn(state);
+    
+    if (!nextPlayerHand(state)) {
+      nextTurn(state);
+    }
   }
 
   render(state);
@@ -90,8 +108,21 @@ export function hit(state) {
 
 export function stand(state) {
   if (!state.canHit) return;
-  state.canHit = false;
-  nextTurn(state);
+  
+  const you = state.players[0];
+  const hand = you.hands ? you.hands[you.currentHandIndex] : you;
+  hand.status = "stand";
+
+  if (you.hands && you.currentHandIndex < you.hands.length - 1) {
+      you.currentHandIndex++;
+      you.uiStatus = `Hand ${you.currentHandIndex + 1}`;
+      state.canHit = true;
+      render(state);
+      return;
+    }
+    state.canHit = false;
+    nextTurn(state);
+    render(state);
 }
 
 export function doubleDown(state) {
@@ -101,6 +132,16 @@ export function doubleDown(state) {
   if (hand.cards.length !== 2) return;
 
   drawCard(hand, state.deck);
+  hand.status = "stand";
+
+  if (you.hands && you.currentHandIndex < you.hands.length - 1) {
+      you.currentHandIndex++;
+      you.uiStatus = `Hand ${you.currentHandIndex + 1}`;
+      state.canHit = true;
+      render(state);
+      return;
+  }
+
   state.canHit = false;
   nextTurn(state);
 }
@@ -141,6 +182,10 @@ export function splitHand(state) {
 
   you.currentHandIndex = 0;
   you.uiStatus = "Split";
+
+  render(state);
+  updateControls(state);
+  updateTurnText(state);
 }
 
 export async function dealerPlay(state) {
@@ -178,38 +223,97 @@ function decideWinners(state) {
     const player = state.players[0];
     const dealerSum = state.dealer.sum;
 
-    if (player.sum > 21) player.status = "Lose";
-    else if (dealerSum > 21 || player.sum > dealerSum) player.status = "Win";
-    else if (player.sum === dealerSum) player.status = "Tie";
-    else player.status = "Lose";
+    let handResults = [];
 
-    if (player.status === "Win") {
+    if (player.hands) {
+        player.hands.forEach((hand, index) => {
+            let outcome;
+
+            if (hand.sum > 21) outcome = "Lose";
+            else if (dealerSum > 21 || hand.sum > dealerSum) outcome = "Win";
+            else if (hand.sum === dealerSum) outcome = "Tie";
+            else outcome = "Lose";
+
+            hand.status = outcome;
+
+            handResults.push({
+                hand: index + 1,
+                outcome,
+                sum: hand.sum
+            });
+        });
+    } else {
+        let outcome;
+
+        if (player.sum > 21) outcome = "Lose";
+        else if (dealerSum > 21 || player.sum > dealerSum) outcome = "Win";
+        else if (player.sum === dealerSum) outcome = "Tie";
+        else outcome = "Lose";
+
+        player.status = outcome;
+
+        handResults.push({
+            hand: 1,
+            outcome,
+            sum: player.sum
+        });
+    }
+    const wins = handResults.filter(r => r.outcome === "Win").length;
+    const losses = handResults.filter(r => r.outcome === "Lose").length;
+
+    let historyLetter = "T";
+
+    if (wins > 0 && losses === 0) {
         state.stats.wins++;
         state.stats.streak++;
-    } else if (player.status === "Lose") {
+        historyLetter = "W";
+    } else if (losses > 0 && wins === 0) {
         state.stats.losses++;
         state.stats.streak = 0;
+        historyLetter = "L";
+    } else {
+        state.stats.streak = state.stats.streak;
+        historyLetter = "T";
     }
-    let playerLetter = player.status === "Win" ? "W" : player.status === "Lose" ? "L" : "T";
-    state.stats.history.push(playerLetter);
+
+    state.stats.history.push(historyLetter);
+    if (state.stats.history.length > 10) {
+        state.stats.history = state.stats.history.slice(-10);
+    }
 
     const botResults = [];
     state.players.filter(p => p.isBot).forEach(bot => {
-        if (bot.sum > 21) bot.status = "Lose";
-        else if (dealerSum > 21 || bot.sum > dealerSum) bot.status = "Win";
-        else if (bot.sum === dealerSum) bot.status = "Tie";
-        else bot.status = "Lose";
+        let outcome;
 
-        botResults.push({ name: bot.name, outcome: bot.status, sum: bot.sum });
+        if (bot.sum > 21) outcome = "Lose";
+        else if (dealerSum > 21 || bot.sum > dealerSum) outcome = "Win";
+        else if (bot.sum === dealerSum) outcome = "Tie";
+        else outcome = "Lose";
+
+        bot.status = outcome;
+
+        botResults.push({
+            name: bot.name,
+            outcome,
+            sum: bot.sum
+        });
     });
-    if (state.stats.history.length > 10) state.stats.history = state.stats.history.slice(-10);
 
     state.lastResult = {
-        player: { sum: player.sum, outcome: player.status },
+        player: player.hands
+            ? player.hands.map((h, idx) => ({ hand: idx + 1, sum: h.sum, outcome: h.status }))
+            : { sum: player.sum, outcome: player.status },
         bots: botResults,
         dealer: dealerSum
     };
-    console.log("Round result:", state.lastResult);
+        if (!player.hands) {
+        let playerLetter = player.status === "Win" ? "W" : player.status === "Lose" ? "L" : "T";
+        state.stats.history.push(playerLetter);
+        if (state.stats.history.length > 10) state.stats.history = state.stats.history.slice(-10);
+
+        if (player.status === "Win") state.stats.wins++;
+        else if (player.status === "Lose") state.stats.losses++;
+    }
 }
 
 export function addBot(state) {

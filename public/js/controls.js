@@ -1,11 +1,6 @@
-import {
-  hit,
-  stand,
-  doubleDown,
-  splitHand,
-  startRound,
-  addBot
-} from "./gameLogic.js";
+import { render } from "./ui.js";
+import { hit, stand, doubleDown, splitHand, startRound, addBot } from "./gameLogic.js";
+import { updateControls, updateTurnText } from "./ui.js";
 
 export function attachControls(state) {
   document.getElementById("hit").onclick = () => {
@@ -21,7 +16,14 @@ export function attachControls(state) {
   };
 
   document.getElementById("split").onclick = () => {
-    if (!state.roundFinished) splitHand(state);
+    if (!state.roundFinished) {
+      splitHand(state);
+      state.canHit = true;
+      state.players[0].uiStatus = "Split!";
+      render(state);
+      updateControls(state);
+      updateTurnText(state);
+    }
   };
 
   document.getElementById("new-round").onclick = () => {

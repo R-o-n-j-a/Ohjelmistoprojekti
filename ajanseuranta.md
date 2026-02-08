@@ -19,3 +19,9 @@
 28.1 4h bugien korjaamista, korttien animaatiota ja peli kokemuksen parantamista.
 
 29.1 3h Bugien korjaamista, bottien vaikeuttamista, html sivujen ulkonäön muokkausta.
+
+2.2 2h tiedoston jakamista.
+
+5.2 4h tiedoston jakamista, bugien korjailua ja express taustajärjestelmän luomista.
+
+8.2 1h 30min Splitin ja muiden bugien korjaamista
