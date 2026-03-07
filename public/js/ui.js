@@ -177,7 +177,16 @@ export function showInfo(state, message) {
 
 export function updateControls(state) {
     const player = state.players[0];
-    const canHit = !state.roundFinished && player.status === "playing";
+    let canHit = false;
+
+    if (!state.roundFinished) {
+        if (player.hands) {
+            const hand = player.hands[player.currentHandIndex];
+            canHit = hand && hand.status === "playing";
+        } else {
+            canHit = player.status === "playing";
+        }
+    }
 
     document.getElementById("hit").disabled = !canHit;
     document.getElementById("stand").disabled = !canHit;
@@ -221,12 +230,4 @@ export function showResult(state, text) {
     const p = document.createElement("p");
     p.textContent = text;
     results.appendChild(p);
-}
-
-function getValue(card) {
-    if (!card) return 0;
-    const value = card.split("-")[0];
-    if (value === "A") return 11;
-    if (["J", "Q", "K"].includes(value)) return 10;
-    return parseInt(value);
 }

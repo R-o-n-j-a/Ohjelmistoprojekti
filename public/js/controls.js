@@ -27,7 +27,8 @@ export function attachControls(state) {
   };
 
   document.getElementById("new-round").onclick = () => {
-    if (state.roundFinished) startRound(state);
+    if (!state.roundFinished) return;
+    startRound(state);
   };
 
   document.getElementById("add-bot").onclick = () => {

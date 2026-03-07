@@ -44,12 +44,10 @@ export function startRound(state) {
   state.players.forEach(p => {
     p.cards = [];
     p.sum = 0;
-    p.status = "playing";
     p.uiStatus = "";
     p.aceCount = 0;
     p.hands = null;
     p.currentHandIndex = 0;
-    p.active = p.isBot ? true : true;
 
     if (p.isBot) {
       p.active = true;
@@ -102,7 +100,6 @@ export function hit(state) {
       nextTurn(state);
     }
   }
-
   render(state);
 }
 
@@ -113,6 +110,7 @@ export function stand(state) {
   const hand = you.hands ? you.hands[you.currentHandIndex] : you;
   hand.status = "stand";
 
+
   if (you.hands && you.currentHandIndex < you.hands.length - 1) {
       you.currentHandIndex++;
       you.uiStatus = `Hand ${you.currentHandIndex + 1}`;
@@ -121,8 +119,8 @@ export function stand(state) {
       return;
     }
     state.canHit = false;
-    nextTurn(state);
     render(state);
+    nextTurn(state);
 }
 
 export function doubleDown(state) {
@@ -147,6 +145,7 @@ export function doubleDown(state) {
 }
 
 async function nextTurn(state) {
+    updateControls(state);
     await playBots(state);
     await dealerPlay(state);
     decideWinners(state);
@@ -258,25 +257,21 @@ function decideWinners(state) {
             sum: player.sum
         });
     }
-    const wins = handResults.filter(r => r.outcome === "Win").length;
-    const losses = handResults.filter(r => r.outcome === "Lose").length;
 
-    let historyLetter = "T";
+    handResults.forEach(result => { 
+      if (result.outcome === "Win") { 
+        state.stats.wins++; 
+        state.stats.streak++; 
+        state.stats.history.push("W"); 
+      } else if (result.outcome === "Lose") { 
+        state.stats.losses++; 
+        state.stats.streak = 0; 
+        state.stats.history.push("L"); 
+      } else { 
+        state.stats.history.push("T"); 
+      } 
+    });
 
-    if (wins > 0 && losses === 0) {
-        state.stats.wins++;
-        state.stats.streak++;
-        historyLetter = "W";
-    } else if (losses > 0 && wins === 0) {
-        state.stats.losses++;
-        state.stats.streak = 0;
-        historyLetter = "L";
-    } else {
-        state.stats.streak = state.stats.streak;
-        historyLetter = "T";
-    }
-
-    state.stats.history.push(historyLetter);
     if (state.stats.history.length > 10) {
         state.stats.history = state.stats.history.slice(-10);
     }
@@ -306,14 +301,6 @@ function decideWinners(state) {
         bots: botResults,
         dealer: dealerSum
     };
-        if (!player.hands) {
-        let playerLetter = player.status === "Win" ? "W" : player.status === "Lose" ? "L" : "T";
-        state.stats.history.push(playerLetter);
-        if (state.stats.history.length > 10) state.stats.history = state.stats.history.slice(-10);
-
-        if (player.status === "Win") state.stats.wins++;
-        else if (player.status === "Lose") state.stats.losses++;
-    }
 }
 
 export function addBot(state) {
