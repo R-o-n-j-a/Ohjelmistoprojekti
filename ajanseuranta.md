@@ -27,3 +27,5 @@
 8.2 1h 30min Splitin ja muiden bugien korjaamista
 
 7.3 1h lisää bugien korjaamista
+
+11.3 2h yritin saada multiplayeriä toimimaan, en saanut toimimaan jonka takia en vielä siirtänyt githubiin
