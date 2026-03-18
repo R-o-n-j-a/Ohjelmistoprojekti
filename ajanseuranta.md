@@ -29,3 +29,9 @@
 7.3 1h lisää bugien korjaamista
 
 11.3 2h yritin saada multiplayeriä toimimaan, en saanut toimimaan jonka takia en vielä siirtänyt githubiin
+
+16.3 4h multiplayerin tekoa, ei vieläkään pelattavissa jonka takia en päivitä vielä githubiin.
+
+17.3 4h multiplayerin tekoa, korvasin vanhoja tiedostoja uusilla, päivitin ulkonäköä.
+
+18.3 4h 30min jatkoin uusien tiedostojen korjaamisella ja ulkonäön muokkaamisella.
