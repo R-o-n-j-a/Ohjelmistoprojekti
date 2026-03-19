@@ -1,67 +1,48 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>BlackJack</title>
-        <link rel="stylesheet" href="./css/style.css">
-        <script type="module" src="js/main.js"></script>
-    </head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blackjack</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="blackjack-page">
 
-    <body class="blackjack-page">
-        <div id="table">
-            <div id="dealer-section">
-                <h2>Dealer: <span id="dealer-sum"></span>
-                <span id="dealer-status" class="bot-status"></span></h2>
-                <div id="dealer-cards"></div>
-            </div>
+  <div id="dealer-section">
+    <div class="section-label">DEALER</div>
+    <div class="dealer-info">
+      <span id="dealer-sum-display" class="sum-badge">?</span>
+      <span id="dealer-status-display" class="status-tag"></span>
+    </div>
+    <div id="dealer-cards" class="cards-row"></div>
+  </div>
 
-            <div id="bots-row">
-                <div id="bot-left" class="bot" data-bot="0">
-                    <h2>Bot 1: <span class="bot-sum"></span>
-                    <span class="bot-status"></span></h2>
-                    <div class="bot-cards"></div>
-                </div>
+  <div id="players-row"></div>
 
-                <div id="bot-center" class="bot" data-bot="1">
-                    <h2>Bot 2: <span class="bot-sum"></span>
-                    <span class="bot-status"></span></h2>
-                    <div class="bot-cards"></div>
-                </div>
+  <div id="game-bottom">
+    <div id="game-controls">
+      <button id="btn-hit"       class="game-btn" disabled>Hit</button>
+      <button id="btn-stand"     class="game-btn" disabled>Stand</button>
+      <button id="btn-double"    class="game-btn" disabled>Double</button>
+      <button id="btn-split"     class="game-btn" disabled>Split</button>
+      <button id="btn-new-round" class="game-btn new-round-btn" disabled>New Round</button>
+      <button id="btn-exit-game" class="game-btn exit-btn">Exit</button>
+    </div>
+  </div>
 
-                <div id="bot-right" class="bot" data-bot="2">
-                    <h2>Bot 3: <span class="bot-sum"></span>
-                    <span class="bot-status"></span></h2>
-                    <div class="bot-cards"></div>
-                </div>
-            </div>
+  <div id="game-info-panel">
+    <div id="turn-indicator" class="turn-indicator"></div>
+    <div id="round-results-panel" class="results-panel"></div>
+    <div id="my-stats-panel" class="stats-panel"></div>
+  </div>
 
-            <div id="you-section">
-                <h2>You: <span id="your-sum"></span>
-                <span id="your-status" class="bot-status"></span></h2>
-                <div id="your-cards"></div>
-            </div>
-        </div>
+  <div id="toast" class="toast" style="display:none"></div>
 
-        <div id="bottom-bar">
-            <div id="controls">
-                <button id="hit" class="menu-btn">Hit</button>
-                <button id="stand" class="menu-btn">Stand</button>
-                <button id="double" class="menu-btn">Double</button>
-                <button id="split" class="menu-btn">Split</button>
-                <button id="new-round" class="menu-btn">New Round</button>
-                <button id="add-bot" class="menu-btn">Add Bot</button>
-                <button id="exit" class="menu-btn">Exit</button>
-            </div>
-            <div id="info-panel">
-                <p id="turn-info"></p>
-                <div id="results">
-                    <div id="round-result"></div>
-                    <div id="info-messages"></div>
-                </div>
-                <div id="stats"></div>
-            </div>
-        </div>
-
-    </body>
+  <script src="./js/cards.js"></script>
+  <script src="./js/ui.js"></script>
+  <script src="./js/game.js"></script>
+</body>
 </html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blackjack — Lobby</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="lobby-page">
+
+  <div class="lobby-container">
+    <div class="lobby-header">
+      <h2>Waiting Room</h2>
+      <div class="room-code-box">
+        <span class="room-code-label">Room Code:</span>
+        <span id="lobby-room-id" class="room-code-value">------</span>
+        <button id="btn-copy-code" class="icon-btn" title="Copy room code">📋</button>
+      </div>
+      <p class="lobby-hint">Share this code with friends to invite them!</p>
+    </div>
+
+    <div class="lobby-players-section">
+      <h3>Players <span id="lobby-player-count">(0/6)</span></h3>
+      <div id="lobby-player-list"></div>
+    </div>
+
+    <div id="bot-controls" style="display:none">
+      <div class="bot-controls-header">
+        <span>Add Bots</span>
+        <span id="bot-count-label" class="bot-count-label">0 / 3</span>
+      </div>
+      <div class="bot-style-row">
+        <button class="bot-style-btn" data-style="safe"       title="Stands at 16+">Safe</button>
+        <button class="bot-style-btn" data-style="normal"     title="Stands at 17+">Normal</button>
+        <button class="bot-style-btn" data-style="aggressive" title="Stands at 18+">Aggressive</button>
+        <button class="bot-style-btn" data-style=""           title="Random style">Random</button>
+      </div>
+      <p class="bot-hint">Choose the bots personality.</p>
+    </div>
+
+    <div id="lobby-status-msg" class="lobby-status">Waiting for the host to start...</div>
+
+    <div class="lobby-actions">
+      <button id="btn-start-game" class="menu-btn primary-btn" style="display:none">Start Game</button>
+      <button id="btn-leave-lobby" class="menu-btn danger-btn">Leave Room</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <script src="./js/cards.js"></script>
+  <script src="./js/ui.js"></script>
+  <script src="./js/lobby.js"></script>
+</body>
+</html>

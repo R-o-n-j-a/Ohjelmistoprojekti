@@ -1,33 +1,36 @@
-import { drawCard } from "./gameLogic.js";
-import { delay, getCardValue } from "./utils.js";
-import { render } from "./ui.js";
+const { getCardValue, draw } = require('./cards');
 
-export async function playBots(state) {
-  const bots = state.players.filter(p => p.isBot && p.active);
+const delay = ms => new Promise(r => setTimeout(r, ms));
 
-  for (const bot of bots) {
-    bot.uiStatus = "Thinking...";
-    render(state);
-    await delay(600);
+let broadcast = () => {};
+const setBroadcast = fn => { broadcast = fn; };
 
-    const dealerUp = getCardValue(state.dealer.cards[1]);
-    let limit = bot.style === "aggressive" ? 18 :
-                bot.style === "safe" ? 16 : 17;
+async function playBot(room, idx) {
+  const bot = room.players[idx];
+  const upVal = getCardValue(room.dealer.cards[1] || room.dealer.cards[0]);
 
-    if (dealerUp >= 7) limit++;
-    if (dealerUp <= 3) limit--;
+  let limit = bot.botStyle === 'aggressive' ? 18 : bot.botStyle === 'safe' ? 16 : 17;
+  if (upVal >= 7) limit++;
+  if (upVal <= 3) limit--;
+  limit = Math.max(15, Math.min(limit, 19));
 
-    limit = Math.max(15, Math.min(limit, 19));
+  Object.assign(bot, { status: 'playing', uiStatus: 'Thinking…' });
+  room.currentPlayerIndex = idx;
+  broadcast(room); await delay(800);
 
-    while (bot.sum < limit) {
-      drawCard(bot, state.deck);
-      bot.uiStatus = "Hit";
-      render(state);
-      await delay(600);
+  while (bot.sum < limit) {
+    draw(bot, room.deck);
+    bot.uiStatus = `Hit (${bot.sum})`;
+    broadcast(room); await delay(700);
+    if (bot.sum > 21) {
+      Object.assign(bot, { uiStatus: 'Bust!', status: 'bust' });
+      broadcast(room); await delay(500);
+      return;
     }
-
-    bot.uiStatus = bot.sum > 21 ? "Bust" : "Stand";
-    bot.active = false;
-    render(state);
   }
+
+  Object.assign(bot, { uiStatus: 'Stand', status: 'stand' });
+  broadcast(room); await delay(500);
 }
+
+module.exports = { playBot, setBroadcast };

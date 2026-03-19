@@ -1,233 +1,253 @@
-import { getCardValue } from "./utils.js";
+const COLORS = ['#e05c5c', '#5c9de0', '#5cba7c', '#e0a85c', '#b45ce0', '#5cc9c9'];
 
-export function render(state) {
-    // dealer
-    const dealerDiv = document.getElementById("dealer-cards");
-    dealerDiv.innerHTML = "";
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
 
-    if (state.dealer.status === "hidden" && !state.roundFinished) {
-        const backImg = document.createElement("img");
-        backImg.src = "./cards/BACK.png";
-        dealerDiv.appendChild(backImg);
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.display = 'block';
+  t.classList.add('toast-show');
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(() => {
+    t.classList.remove('toast-show');
+    setTimeout(() => { t.style.display = 'none'; }, 300);
+  }, duration);
+}
 
-    if (state.dealer.cards[1]) {
-        const visibleImg = document.createElement("img");
-        visibleImg.src = `./cards/${state.dealer.cards[1]}.png`;
-        dealerDiv.appendChild(visibleImg);
-    }
-    } else {
-        state.dealer.cards.forEach(c => {
-            const img = document.createElement("img");
-            img.src = `./cards/${c}.png`;
-            dealerDiv.appendChild(img);
-        });
-    }
+function showJoinError(msg) {
+  const el = document.getElementById('join-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
 
-    document.getElementById("dealer-sum").innerText =
-        (state.dealer.status === "hidden") ? "?" : state.dealer.sum;
+function setBtn(id, enabled) {
+  document.getElementById(id).disabled = !enabled;
+}
 
-    document.getElementById("dealer-status").innerText =
-        state.dealer.uiStatus || "";
+function appendCardImg(container, cardCode, small = false) {
+  const img = document.createElement('img');
+  img.src = `./cards/${cardCode}.png`;
+  img.className = `card-img${small ? ' card-sm' : ''}`;
+  img.alt = cardCode;
+  container.appendChild(img);
+}
 
-    //bots
-    const botDivs = document.querySelectorAll(".bot");
-    const bots = state.players.filter(p => p.isBot);
+function escHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-    botDivs.forEach((botDiv, index) => {
-        const bot = bots[index];
-        if (!bot) {
-            botDiv.style.display = "none";
-            return;
-        }
-        botDiv.style.display = "block";
-        botDiv.querySelector(".bot-sum").innerText = bot.sum;
-        botDiv.querySelector(".bot-status").innerText = bot.uiStatus || "";
+function renderLobby(state, myId) {
+  document.getElementById('lobby-room-id').textContent = state.roomId;
+  document.getElementById('lobby-player-count').textContent = `(${state.players.length}/6)`;
 
-        const cardsDiv = botDiv.querySelector(".bot-cards");
-        cardsDiv.innerHTML = "";
-        bot.cards.forEach(c => {
-            const img = document.createElement("img");
-            img.src = `./cards/${c}.png`;
-            cardsDiv.appendChild(img);
-        });
-    });
-    //player
-    const yourDiv = document.getElementById("your-cards");
-    yourDiv.innerHTML = "";
+  const me = state.players.find(p => p.id === myId);
+  const botCount = state.players.filter(p => p.isBot).length;
+  const maxBots = state.maxBots || 3;
 
-    const player = state.players[0];
-    const handContainer = document.createElement("div");
-
-    handContainer.style.display = "flex";
-    handContainer.style.gap = "10px";
-    handContainer.style.justifyContent = "center";
-
-    if (player.hands) {
-        player.hands.forEach((hand, idx) => {
-            const handDiv = document.createElement("div");
-            handDiv.classList.add("hand");
-            if (idx === player.currentHandIndex) handDiv.classList.add("active-hand");
-            
-            const label = document.createElement("div");
-            label.innerText = `Hand ${idx + 1} (${hand.sum})`;
-            handDiv.appendChild(label);
-
-            const cardsDiv = document.createElement("div");
-            cardsDiv.classList.add("hand-cards");
-
-            hand.cards.forEach(c => {
-                const img = document.createElement("img");
-                img.src = `./cards/${c}.png`;
-                cardsDiv.appendChild(img);
-            });
-
-            handDiv.appendChild(cardsDiv);
-            handContainer.appendChild(handDiv);
-        });
-    } else {
-        const cardsDiv = document.createElement("div");
-        cardsDiv.classList.add("hand-cards");
-
-        player.cards.forEach(c => {
-            const img = document.createElement("img");
-            img.src = `./cards/${c}.png`;
-            cardsDiv.appendChild(img);
-        });
-        handContainer.appendChild(cardsDiv);
-    }
-    yourDiv.appendChild(handContainer);
-
-    document.getElementById("your-sum").innerText = player.hands
-        ? player.hands.map(h => h.sum).join(" / ")
-        : player.sum;
-
-    document.getElementById("your-status").innerText =
-        player.uiStatus || "";
-
-    const infoDiv = document.getElementById("info-messages");
-    infoDiv.innerHTML = "";
-    if (state.infoMessages && state.infoMessages.length) {
-        state.infoMessages.forEach(msg => {
-            const div = document.createElement("div");
-            div.classList.add("info");
-            div.innerText = msg;
-            infoDiv.appendChild(div);
-        });
-    }
-    //round results
-    const roundDiv = document.getElementById("round-result");
-    roundDiv.innerHTML = "";
-   if (state.roundFinished && state.lastResult) {
-
-        const title = document.createElement("strong");
-        title.innerText = "Round results:";
-        roundDiv.appendChild(title);
-
-        if (Array.isArray(state.lastResult.player)) {
-            state.lastResult.player.forEach(hand => {
-                const p = document.createElement("p");
-                p.innerText = `You (Hand ${hand.hand}): ${hand.outcome} (${hand.sum})`;
-                roundDiv.appendChild(p);
-            });
-        } else {
-            const p = document.createElement("p");
-            p.innerText = `You: ${state.lastResult.player.outcome} (${state.lastResult.player.sum})`;
-            roundDiv.appendChild(p);
-        }
-        if (state.lastResult.bots && state.lastResult.bots.length) {
-            state.lastResult.bots.forEach(bot => {
-                const p = document.createElement("p");
-                p.innerText = `${bot.name}: ${bot.outcome} (${bot.sum})`;
-                roundDiv.appendChild(p);
-            });
-        }
-        const d = document.createElement("p");
-        d.innerText = `Dealer: ${state.lastResult.dealer}`;
-        roundDiv.appendChild(d);
-    }
-    const statsDiv = document.getElementById("stats");
-    statsDiv.innerHTML = `
-        <hr>
-        <div>Current streak: ${state.stats.streak}</div>
-        <div>Wins: ${state.stats.wins} | Losses: ${state.stats.losses}</div>
-        <div>History: ${state.stats.history.join(" ")}</div>
+  const list = document.getElementById('lobby-player-list');
+  list.innerHTML = '';
+  state.players.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'lobby-player-row';
+    const extra    = p.isBot ? `<span class="bot-style-tag">${p.botStyle || 'random'}</span>` : '';
+    const youTag   = (!p.isBot && p.id === myId) ? ' <em>(You)</em>' : '';
+    const removeBtn = (me?.isHost && p.isBot)
+      ? `<button class="remove-bot-btn" data-botid="${p.id}" title="Remove bot">✕</button>` : '';
+    row.innerHTML = `
+      <span class="lobby-player-name">${escHtml(p.name)}${youTag} ${extra}</span>
+      <span class="lobby-player-status ${p.connected ? 'online' : 'offline'}">${p.isBot ? 'Bot' : (p.connected ? 'Ready' : 'Offline')}</span>
+      ${removeBtn}
     `;
+    list.appendChild(row);
+  });
 
-    const turnInfo = document.getElementById("turn-info");
-    if (state.roundFinished) turnInfo.innerText = "Round finished";
-    else if (state.canHit) turnInfo.innerText = "Your turn";
-    else turnInfo.innerText = "Round in progress...";
+  const botCtrl = document.getElementById('bot-controls');
+  const startBtn = document.getElementById('btn-start-game');
 
-    updateControls(state);
-    updateTurnText(state);
+  if (me?.isHost) {
+    botCtrl.style.display = 'block';
+    document.getElementById('bot-count-label').textContent = `${botCount} / ${maxBots}`;
+    const atMax = botCount >= maxBots || state.players.length >= 6;
+    document.querySelectorAll('.bot-style-btn').forEach(b => { b.disabled = atMax; });
+    startBtn.style.display = 'block';
+    startBtn.disabled = state.players.filter(p => p.connected).length < 1;
+    document.getElementById('lobby-status-msg').textContent = state.players.length === 1
+      ? 'You are the host. Add bots or wait for friends, then start!'
+      : `You are the host. ${state.players.length} player(s) ready — start when you like!`;
+  } else {
+    botCtrl.style.display = 'none';
+    startBtn.style.display = 'none';
+    document.getElementById('lobby-status-msg').textContent = 'Waiting for the host to start the game…';
+  }
 }
 
-
-export function showInfo(state, message) {
-    if (!state.infoMessages) state.infoMessages = [];
-    state.infoMessages.push(message);
-    if (state.infoMessages.length > 5) state.infoMessages.shift();
-    render(state);
-
-    setTimeout(() => {
-        state.infoMessages.shift();
-        render(state);
-    }, 3000);
+function renderGame(state, myId) {
+  renderDealer(state);
+  renderPlayers(state, myId);
+  renderControls(state, myId);
+  renderTurnIndicator(state, myId);
+  if (state.roundFinished && state.lastResults) renderRoundResults(state);
+  else document.getElementById('round-results-panel').innerHTML = '';
+  renderMyStats(state, myId);
 }
 
-export function updateControls(state) {
-    const player = state.players[0];
-    let canHit = false;
-
-    if (!state.roundFinished) {
-        if (player.hands) {
-            const hand = player.hands[player.currentHandIndex];
-            canHit = hand && hand.status === "playing";
-        } else {
-            canHit = player.status === "playing";
-        }
-    }
-
-    document.getElementById("hit").disabled = !canHit;
-    document.getElementById("stand").disabled = !canHit;
-    document.getElementById("double").disabled =
-        !canHit || (player.hands ? player.hands[player.currentHandIndex].cards.length !== 2 : player.cards.length !== 2);
-
-    const canSplit =
-        canHit &&
-        !player.hands &&
-        player.cards.length === 2 &&
-        getCardValue(player.cards[0]) === getCardValue(player.cards[1]);
-
-    document.getElementById("split").disabled = !canSplit;
-    document.getElementById("add-bot").disabled = state.players.filter(p => p.isBot).length >= state.maxBots;
-    document.getElementById("new-round").disabled = !state.roundFinished;
+function renderDealer(state) {
+  const cardsDiv = document.getElementById('dealer-cards');
+  cardsDiv.innerHTML = '';
+  if (state.dealer.status === 'hidden') {
+    appendCardImg(cardsDiv, 'BACK');
+    if (state.dealer.cards[1]) appendCardImg(cardsDiv, state.dealer.cards[1]);
+  } else {
+    state.dealer.cards.forEach(c => appendCardImg(cardsDiv, c));
+  }
+  document.getElementById('dealer-sum-display').textContent = state.dealer.status === 'hidden' ? '?' : state.dealer.sum;
+  document.getElementById('dealer-status-display').textContent = state.dealer.uiStatus || '';
 }
 
-export function updateTurnText(state) {
-    const player = state.players[0];
+function renderPlayers(state, myId) {
+  const row = document.getElementById('players-row');
+  row.innerHTML = '';
 
-    if (state.roundFinished) {
-        document.getElementById("turn-info").innerText = "Round finished";
-        return;
-    }
-    let hasActiveHand = false;
+  state.players.forEach((player, idx) => {
+    const isMe      = player.id === myId;
+    const isCurrent = state.currentPlayerIndex === idx && state.phase === 'playing';
+
+    const slot = document.createElement('div');
+    slot.className = ['player-slot', isCurrent ? 'current-player' : '', isMe ? 'my-slot' : '',
+      player.isBot ? 'bot-slot' : '', !player.connected ? 'disconnected' : ''].filter(Boolean).join(' ');
+    slot.style.setProperty('--pc', COLORS[idx % COLORS.length]);
+
+    const youBadge   = isMe ? ' <span class="you-badge">(You)</span>' : '';
+    const styleBadge = player.isBot ? `<span class="bot-style-tag sm">${player.botStyle || 'random'}</span>` : '';
+    const header = document.createElement('div');
+    header.className = 'player-slot-header';
+    header.innerHTML = `
+      <span class="ps-name">${escHtml(player.name)}${youBadge}${styleBadge}</span>
+      <span class="ps-sum">${getSumText(player)}</span>
+    `;
+    slot.appendChild(header);
+
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'ps-cards-wrap';
     if (player.hands) {
-        hasActiveHand = player.currentHandIndex < player.hands.length &&
-                        player.hands[player.currentHandIndex].status === "playing";
+      player.hands.forEach((hand, hi) => {
+        const handDiv = document.createElement('div');
+        handDiv.className = `hand-group${hi === player.currentHandIndex && isCurrent ? ' active-hand' : ''}`;
+        handDiv.innerHTML = `<div class="hand-label">Hand ${hi + 1} · ${hand.sum}</div>`;
+        const hcards = document.createElement('div');
+        hcards.className = 'hand-cards-row';
+        hand.cards.forEach(c => appendCardImg(hcards, c, true));
+        handDiv.appendChild(hcards);
+        cardsWrap.appendChild(handDiv);
+      });
     } else {
-        hasActiveHand = player.status === "playing";
+      const hcards = document.createElement('div');
+      hcards.className = 'hand-cards-row';
+      player.cards.forEach(c => appendCardImg(hcards, c));
+      cardsWrap.appendChild(hcards);
     }
-    if (state.canHit && hasActiveHand) {
-        document.getElementById("turn-info").innerText = "Your turn";
-    } else {
-        document.getElementById("turn-info").innerText = "Round in progress...";
-    }
+    slot.appendChild(cardsWrap);
+
+    const badge = document.createElement('div');
+    badge.className = `ps-badge ${getResultClass(player, state)}`;
+    badge.textContent = getStatusText(player, state);
+    slot.appendChild(badge);
+
+    row.appendChild(slot);
+  });
 }
 
-export function showResult(state, text) {
-    const results = document.getElementById("round-result");
-    const p = document.createElement("p");
-    p.textContent = text;
-    results.appendChild(p);
+function renderControls(state, myId) {
+  const me        = state.players.find(p => p.id === myId);
+  const isMyTurn  = state.players[state.currentPlayerIndex]?.id === myId;
+  const isPlaying = state.phase === 'playing' && isMyTurn && !state.roundFinished;
+  const hand      = me?.hands ? me.hands[me.currentHandIndex] : me;
+  const canAct    = isPlaying && hand?.status === 'playing';
+
+  setBtn('btn-hit',       canAct);
+  setBtn('btn-stand',     canAct);
+  setBtn('btn-double',    canAct && (me?.hands ? hand.cards.length === 2 : me?.cards.length === 2));
+  setBtn('btn-split',     canAct && !me?.hands && me?.cards.length === 2 &&
+                          getCardValue(me.cards[0]) === getCardValue(me.cards[1]));
+  setBtn('btn-new-round', state.roundFinished && !!me?.isHost);
+
+  document.getElementById('game-controls').classList.toggle('my-turn-glow', isMyTurn && !state.roundFinished);
+}
+
+function renderTurnIndicator(state, myId) {
+  const el  = document.getElementById('turn-indicator');
+  const me  = state.players.find(p => p.id === myId);
+  const cur = state.players[state.currentPlayerIndex];
+
+  if (state.roundFinished) {
+    el.textContent = me?.isHost ? 'Round over — start a new round!' : 'Round finished — waiting for host…';
+    el.className = 'turn-indicator finished';
+  } else if (state.phase === 'dealer_turn') {
+    el.textContent = 'Dealer is playing…';
+    el.className = 'turn-indicator dealer-turn';
+  } else if (cur?.id === myId) {
+    el.textContent = 'Your turn!';
+    el.className = 'turn-indicator my-turn';
+  } else {
+    el.textContent = cur?.isBot ? `${escHtml(cur.name)} is thinking…` : `Waiting for ${escHtml(cur?.name)}…`;
+    el.className = 'turn-indicator other-turn';
+  }
+}
+
+function renderRoundResults(state) {
+  const panel = document.getElementById('round-results-panel');
+  panel.innerHTML = '<div class="results-title">Round Results</div>';
+  state.lastResults.results.forEach(r => {
+    r.outcomes.forEach(o => {
+      const p = document.createElement('div');
+      p.className = `result-row result-${o.outcome.toLowerCase()}`;
+      p.textContent = `${r.playerName}${r.outcomes.length > 1 ? ` (H${o.hand})` : ''} : ${o.outcome} · ${o.sum}`;
+      panel.appendChild(p);
+    });
+  });
+  const d = document.createElement('div');
+  d.className = 'result-row dealer-row';
+  d.textContent = `Dealer : ${state.lastResults.dealerSum}`;
+  panel.appendChild(d);
+}
+
+function renderMyStats(state, myId) {
+  const me = state.players.find(p => p.id === myId);
+  if (!me) return;
+  const s = me.stats;
+  document.getElementById('my-stats-panel').innerHTML = `
+    <span>${s.wins}W</span>
+    <span>${s.losses}L</span>
+    <span>${s.streak} streak</span>
+    <span class="history-chips">${s.history.map(h => `<span class="hc hc-${h.toLowerCase()}">${h}</span>`).join('')}</span>
+  `;
+}
+
+function getSumText(player) {
+  return player.hands ? player.hands.map(h => h.sum).join(' / ') : (player.sum || '0');
+}
+
+function getStatusText(player, state) {
+  if (state.roundFinished && player.lastResult) return player.lastResult;
+  if (player.uiStatus) return player.uiStatus;
+  if (state.phase === 'playing') {
+    if (state.players[state.currentPlayerIndex]?.id === player.id) return 'Turn';
+    if (player.status === 'waiting') return 'Waiting…';
+  }
+  return player.status || '';
+}
+
+function getResultClass(player, state) {
+  if (!state.roundFinished) return '';
+  const r = player.lastResult || '';
+  if (r.includes('Win'))  return 'result-win';
+  if (r.includes('Lose')) return 'result-lose';
+  if (r.includes('Tie'))  return 'result-tie';
+  return '';
 }
