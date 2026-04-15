@@ -35,3 +35,7 @@
 17.3 4h multiplayerin tekoa, korvasin vanhoja tiedostoja uusilla, päivitin ulkonäköä.
 
 18.3 4h 30min jatkoin uusien tiedostojen korjaamisella ja ulkonäön muokkaamisella.
+
+19.3 3h korjasin bugeja ja siirsin uudet tiedostot oikeaan kansioon ja päivitin ne githubiin.
+
+1.4 2h dokumentaation kirjoittamista.
